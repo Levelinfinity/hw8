@@ -85,24 +85,15 @@ class CategoryViewSet(viewsets.ModelViewSet):
     destroy=extend_schema(tags=SHOP_TAG, summary='Удалить товар'),
 )
 class ProductViewSet(viewsets.ModelViewSet):
-    queryset = Product.objects.all()
-    serializer_class = ProductSerializer 
-    filter_backends = [filters.SearchFilter]
-    search_fields = ['title', 'description'] 
+    queryset = Product.objects.select_related('shop', 'category').all()
+    serializer_class = ProductSerializer
+    pagination_class = ShopPagination
 
-    def list(self, request, *args, **kwargs):
-        if not Product.objects.exists():
-            category, _ = Category.objects.get_or_create(name="Электроника")
-            shop, _ = Shop.objects.get_or_create(name="Тестовый Магазин")
-            
-            Product.objects.create(
-                title="Test Phone 1",  
-                category=category,
-                shop=shop,
-                price=1000
-            )
-
-        return super().list(request, *args, **kwargs)
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_class = ProductFilter
+    search_fields = ['title', 'category__name', 'shop__name']
+    ordering_fields = ['price', 'stock', 'title', 'id']
+    ordering = ['id']
 
     def get_permissions(self):
         if self.action in ['list', 'retrieve']:
@@ -110,3 +101,4 @@ class ProductViewSet(viewsets.ModelViewSet):
         else:
             permission_classes = [permissions.IsAuthenticatedOrReadOnly]
         return [permission() for permission in permission_classes]
+
