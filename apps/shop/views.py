@@ -90,35 +90,10 @@ class ProductViewSet(viewsets.ModelViewSet):
     pagination_class = ShopPagination
     
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    filterset_fields = ['category', 'shop'] 
-    search_fields = ['title', 'description'] 
+    filterset_fields = ['category', 'shop']
+    search_fields = ['title', 'description']
     ordering_fields = ['price', 'id']
     ordering = ['id']
 
-    def list(self, request, *args, **kwargs):
-        if not Product.objects.exists():
-            from django.contrib.auth.models import User
-            owner = User.objects.first()
-            
-            category, _ = Category.objects.get_or_create(name="Электроника")
-            
-            shop_defaults = {}
-            if owner:
-                shop_defaults['user'] = owner
-            shop, _ = Shop.objects.get_or_create(name="Тестовый Магазин", defaults=shop_defaults)
-            
-            Product.objects.create(
-                title="Test Phone 1",  
-                category=category,
-                shop=shop,
-                price=1000
-            )
-
-        return super().list(request, *args, **kwargs)
-
     def get_permissions(self):
-        if self.action in ['list', 'retrieve']:
-            permission_classes = [permissions.AllowAny]
-        else:
-            permission_classes = [permissions.IsAuthenticatedOrReadOnly]
-        return [permission() for permission in permission_classes]
+        return [permissions.AllowAny()]
